@@ -1,7 +1,10 @@
 <template>
   <div class="history">
     <h2 class="history__heading">Chatbot</h2>
-    <span class="history__hint">Older</span>
+    <div class="history__hint">
+      <span v-if="response.length === 0">Let's start chatting!</span>
+      <span v-else>Older</span>
+    </div>
     <ClientOnly>
       <ul class="history__list">
         <li
