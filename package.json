@@ -11,8 +11,12 @@
   },
   "dependencies": {
     "@vueuse/core": "^12.7.0",
+    "normalize.css": "^8.0.1",
     "nuxt": "^3.15.4",
     "vue": "latest",
     "vue-router": "latest"
+  },
+  "devDependencies": {
+    "sass": "^1.85.0"
   }
 }

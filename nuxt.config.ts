@@ -8,4 +8,5 @@ export default defineNuxtConfig({
       apiBase: "",
     },
   },
+  css: ["normalize.css", "~/assets/scss/main.scss"],
 });

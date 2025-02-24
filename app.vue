@@ -1,12 +1,6 @@
 <template>
   <div class="wrap">
     <History />
-    <Chat />
+    <NuxtPage />
   </div>
 </template>
-
-<style scoped>
-.wrap {
-  display: flex;
-}
-</style>
