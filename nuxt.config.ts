@@ -12,9 +12,5 @@ export default defineNuxtConfig({
   build: {
     transpile: ["pdfjs-dist"],
   },
-  vite: {
-    optimizeDeps: {
-      include: ["pdfjs-dist", "pdfjs-dist/build/pdf.worker.mjs"],
-    },
-  },
+  modules: ["@pinia/nuxt"],
 });

@@ -2,9 +2,8 @@
 import { ref } from "vue";
 import * as pdfjs from "pdfjs-dist";
 import * as pdfWorker from "pdfjs-dist/build/pdf.worker.mjs";
-
-// 設定 worker 路徑
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc =
+  import.meta.url + "pdfjs-dist/build/pdf.worker.mjs";
 
 export const usePdfParser = () => {
   const loading = ref(false);

@@ -3,7 +3,11 @@
     <!-- 模型選擇 -->
     <div class="chat__header">
       <div class="chat__toggle">
-        <img class="chat__toggle-icon" src="~/assets/icon/sidebar.svg" />
+        <img
+          class="icon"
+          src="~/assets/icon/toggle.svg"
+          @click="isOpen = !isOpen"
+        />
       </div>
       <select v-model="modelName" class="chat__model">
         <option value="gpt-4o">GPT 4o</option>
@@ -51,13 +55,12 @@
           <div class="chat__upload">
             <ClientOnly>
               <input type="file" accept=".pdf" @change="handleFileUpload" />
-              <img class="chat__input-icon" src="~/assets/icon/attach.svg" />
-              <div class="chat__upload-name" id="fileName"></div>
+              <img class="icon" src="~/assets/icon/attach.svg" />
             </ClientOnly>
           </div>
 
           <img
-            class="chat__input-icon"
+            class="icon"
             :class="{ disabled: status === 'pending' }"
             src="~/assets/icon/send.svg"
             @click="chat"
@@ -70,6 +73,8 @@
 
 <script setup>
 import { useStorage } from "@vueuse/core";
+const store = useHistoryStore();
+const { isOpen } = storeToRefs(store);
 const { loading, pdfError, pdfContent, parsePdf } = usePdfParser();
 
 const response = useStorage("response", []);
@@ -159,12 +164,7 @@ async function chat(usePdf = false) {
   }
 }
 
-// const askPrompt = (prompt) => {
-//   inputText.value = prompt.text;
-//   chat();
-// };
-
-// 處理檔案上傳
+// 處理 PDF 檔案上傳
 const handleFileUpload = async (event) => {
   const target = event.target;
   const file = target.files?.[0];
@@ -182,6 +182,6 @@ const pdfKeyword = ref("");
 async function generateKeywords() {
   inputText.value = `請根據下列文字提取關鍵字並生成兩個問題：${pdfContent.value.text}`;
   pdfKeyword.value = await chat(true);
-  console.log(pdfKeyword.value);
+  console.log(pdfContent.value.text);
 }
 </script>
