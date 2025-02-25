@@ -9,4 +9,12 @@ export default defineNuxtConfig({
     },
   },
   css: ["normalize.css", "~/assets/scss/main.scss"],
+  build: {
+    transpile: ["pdfjs-dist"],
+  },
+  vite: {
+    optimizeDeps: {
+      include: ["pdfjs-dist", "pdfjs-dist/build/pdf.worker.mjs"],
+    },
+  },
 });

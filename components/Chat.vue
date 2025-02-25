@@ -28,16 +28,17 @@
 
     <!-- 輸入框 -->
     <div class="chat__footer">
-      <div class="chat__prompt">
+      <!-- <div class="chat__prompt">
         <div
-          v-for="prompt in prompts"
+          v-for="(prompt, index) in prompts"
+          :key="index"
           class="chat__prompt-option"
           @click="askPrompt(prompt)"
         >
           <p>{{ prompt.title }}</p>
           <p>{{ prompt.text }}</p>
         </div>
-      </div>
+      </div> -->
       <div class="chat__input">
         <input
           v-model.trim="inputText"
@@ -47,7 +48,14 @@
           @keyup.enter="chat"
         />
         <div class="chat__input-actions">
-          <img class="chat__input-icon" src="~/assets/icon/attach.svg" />
+          <div class="chat__upload">
+            <ClientOnly>
+              <input type="file" accept=".pdf" @change="handleFileUpload" />
+              <img class="chat__input-icon" src="~/assets/icon/attach.svg" />
+              <div class="chat__upload-name" id="fileName"></div>
+            </ClientOnly>
+          </div>
+
           <img
             class="chat__input-icon"
             :class="{ disabled: status === 'pending' }"
@@ -62,6 +70,8 @@
 
 <script setup>
 import { useStorage } from "@vueuse/core";
+const { loading, pdfError, pdfContent, parsePdf } = usePdfParser();
+
 const response = useStorage("response", []);
 
 const status = ref("idle");
@@ -69,10 +79,10 @@ const error = ref(null);
 
 const modelName = ref("gpt-4o"); // 輸入模型
 const inputText = ref(""); // 輸入文字
-const prompts = ref([
-  { title: "問問今天的天氣吧", text: "台北的天氣如何呢？" },
-  { title: "來點好吃好玩的吧", text: "萬華景點除了龍山寺？" },
-]); // 輸入提示
+// const prompts = ref([
+//   { title: "問問今天的天氣吧", text: "台北的天氣如何呢？" },
+//   { title: "來點好吃好玩的吧", text: "萬華景點除了龍山寺？" },
+// ]);
 
 const chatId = ref(""); // 輸出ID
 const chatContent = ref(""); // 輸出內容
@@ -88,7 +98,7 @@ const chatHistory = computed(() => {
   return response.value?.find((item) => item.id === props.id);
 });
 
-const processStreamResponse = async (res) => {
+async function processStreamResponse(res) {
   for await (const chunk of res) {
     const lines = new TextDecoder().decode(chunk).split("\n");
 
@@ -104,9 +114,9 @@ const processStreamResponse = async (res) => {
       }
     }
   }
-};
+}
 
-const chat = async () => {
+async function chat(usePdf = false) {
   if (!inputText.value) return;
   status.value = "pending";
   error.value = null;
@@ -133,6 +143,9 @@ const chat = async () => {
     });
 
     await processStreamResponse(res);
+
+    if (usePdf) return chatContent;
+
     response.value.push({
       id: chatId.value,
       content: chatContent.value,
@@ -144,10 +157,31 @@ const chat = async () => {
   } finally {
     status.value = "idle";
   }
+}
+
+// const askPrompt = (prompt) => {
+//   inputText.value = prompt.text;
+//   chat();
+// };
+
+// 處理檔案上傳
+const handleFileUpload = async (event) => {
+  const target = event.target;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  try {
+    await parsePdf(file);
+    await generateKeywords();
+  } catch (err) {
+    console.error(err);
+  }
 };
 
-const askPrompt = (prompt) => {
-  inputText.value = prompt.text;
-  chat();
-};
+const pdfKeyword = ref("");
+async function generateKeywords() {
+  inputText.value = `請根據下列文字提取關鍵字並生成兩個問題：${pdfContent.value.text}`;
+  pdfKeyword.value = await chat(true);
+  console.log(pdfKeyword.value);
+}
 </script>
