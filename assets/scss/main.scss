@@ -3,6 +3,7 @@
 body {
   font-family: "Noto Sans", serif;
   font-size: 16px;
+  color: #333;
 }
 
 .wrap {
@@ -29,12 +30,17 @@ body {
 
   &__list {
     padding: 0;
+  }
 
-    .history__item {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      margin-bottom: 20px;
+  &__item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 20px;
+
+    a {
+      color: #333;
+      text-decoration: none;
     }
   }
 }
@@ -87,6 +93,10 @@ body {
     align-self: flex-end;
     width: 80%;
     max-width: 800px;
+
+    @media (max-width: 767px) {
+      width: 100%;
+    }
   }
 
   &__prompt {
@@ -102,7 +112,7 @@ body {
 
       p {
         &:first-child {
-          font-weight: 700;
+          font-weight: 600;
         }
       }
 

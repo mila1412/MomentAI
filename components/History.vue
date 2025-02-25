@@ -2,11 +2,11 @@
   <Transition name="slide">
     <div v-if="isOpen" class="history">
       <h2 class="history__heading">Chatbot</h2>
-      <div class="history__hint">
-        <span v-if="response.length === 0">Let's start chatting!</span>
-        <span v-else>Older</span>
-      </div>
-      <ClientOnly>
+      <ClientOnly
+        ><div class="history__hint">
+          <span v-if="response.length === 0">Let's start chatting!</span>
+          <span v-else>Older</span>
+        </div>
         <ul class="history__list">
           <li
             v-for="(chat, index) in response"

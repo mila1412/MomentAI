@@ -32,24 +32,24 @@
 
     <!-- 輸入框 -->
     <div class="chat__footer">
-      <!-- <div class="chat__prompt">
+      <div class="chat__prompt">
         <div
-          v-for="(prompt, index) in prompts"
+          v-for="(prompt, index) in promptText"
           :key="index"
           class="chat__prompt-option"
           @click="askPrompt(prompt)"
         >
-          <p>{{ prompt.title }}</p>
-          <p>{{ prompt.text }}</p>
+          <p>根據您提供的PDF：</p>
+          <p>{{ prompt }}</p>
         </div>
-      </div> -->
+      </div>
       <div class="chat__input">
         <input
           v-model.trim="inputText"
           type="text"
           class="chat__input-field"
           placeholder="Send a message..."
-          @keyup.enter="chat"
+          @keyup.enter="chat()"
         />
         <div class="chat__input-actions">
           <div class="chat__upload">
@@ -63,7 +63,7 @@
             class="icon"
             :class="{ disabled: status === 'pending' }"
             src="~/assets/icon/send.svg"
-            @click="chat"
+            @click="chat()"
           />
         </div>
       </div>
@@ -84,10 +84,7 @@ const error = ref(null);
 
 const modelName = ref("gpt-4o"); // 輸入模型
 const inputText = ref(""); // 輸入文字
-// const prompts = ref([
-//   { title: "問問今天的天氣吧", text: "台北的天氣如何呢？" },
-//   { title: "來點好吃好玩的吧", text: "萬華景點除了龍山寺？" },
-// ]);
+const promptContent = ref(""); // PDF 提示詞
 
 const chatId = ref(""); // 輸出ID
 const chatContent = ref(""); // 輸出內容
@@ -103,7 +100,7 @@ const chatHistory = computed(() => {
   return response.value?.find((item) => item.id === props.id);
 });
 
-async function processStreamResponse(res) {
+async function processStreamResponse(res, usePdf) {
   for await (const chunk of res) {
     const lines = new TextDecoder().decode(chunk).split("\n");
 
@@ -113,7 +110,8 @@ async function processStreamResponse(res) {
         const json = JSON.parse(line.slice(6));
         if (!chatId.value && json?.id) chatId.value = json?.id;
         const content = json?.choices?.[0]?.delta?.content;
-        if (content) chatContent.value += content;
+        if (usePdf) promptContent.value += content;
+        if (content && !usePdf) chatContent.value += content;
       } catch (err) {
         console.error("JSON parse error:", err);
       }
@@ -147,7 +145,7 @@ async function chat(usePdf = false) {
       responseType: "stream",
     });
 
-    await processStreamResponse(res);
+    await processStreamResponse(res, usePdf);
 
     if (usePdf) return chatContent;
 
@@ -178,10 +176,19 @@ const handleFileUpload = async (event) => {
   }
 };
 
-const pdfKeyword = ref("");
+const promptText = ref("");
 async function generateKeywords() {
-  inputText.value = `請根據下列文字提取關鍵字並生成兩個問題：${pdfContent.value.text}`;
-  pdfKeyword.value = await chat(true);
-  console.log(pdfContent.value.text);
+  inputText.value = `請根據下列文字生成兩個問題並回傳純文字(十個字以內、不要斷行或空格)：${pdfContent.value.text}`;
+  await chat(true);
+  promptText.value = promptContent.value
+    .split(/\d+\.\s*|<br>/)
+    .filter((part) => part.trim())
+    .map((part) => part.trim());
+}
+
+function askPrompt(prompt) {
+  console.log(prompt);
+  inputText.value = prompt;
+  chat();
 }
 </script>
