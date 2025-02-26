@@ -1,7 +1,13 @@
 <template>
   <Transition name="slide">
     <div v-if="isOpen" class="history">
-      <h2 class="history__heading">Chatbot</h2>
+      <div class="history__header">
+        <h2>Chatbot</h2>
+        <NuxtLink to="/">
+          <img class="icon" src="~/assets/icon/add.svg" />
+        </NuxtLink>
+      </div>
+
       <ClientOnly
         ><div class="history__hint">
           <span v-if="response.length === 0">Let's start chatting!</span>

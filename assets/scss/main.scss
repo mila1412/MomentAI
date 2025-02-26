@@ -4,6 +4,7 @@ body {
   font-family: "Noto Sans", serif;
   font-size: 16px;
   color: #333;
+  line-height: 1.5;
 }
 
 .wrap {
@@ -17,8 +18,13 @@ body {
   background-color: #f5f5f5;
   padding: 20px;
 
-  &__heading {
-    margin: 0;
+  &__header {
+    display: flex;
+    justify-content: space-between;
+
+    h2 {
+      margin: 0;
+    }
   }
 
   &__hint {
@@ -83,16 +89,31 @@ body {
     flex: 1;
   }
 
-  &__history,
-  &__output {
-    margin: 20px 20px 40px;
+  &__history {
+    margin: 20px 20px 80px;
+    display: flex;
+    flex-direction: column;
+
+    &-input {
+      align-self: flex-end;
+      max-width: 800px;
+      border: 1px solid #ddd;
+      border-radius: 40px;
+      background-color: #f5f5f5;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+  }
+
+  &__pending {
+    margin: 20px 20px 60px;
   }
 
   // 輸入框
   &__footer {
     align-self: flex-end;
     width: 80%;
-    max-width: 800px;
+    max-width: 1000px;
 
     @media (max-width: 767px) {
       width: 100%;

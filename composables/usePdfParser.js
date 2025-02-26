@@ -1,4 +1,3 @@
-// composables/usePdfParser.js
 import { ref } from "vue";
 import * as pdfjs from "pdfjs-dist";
 import * as pdfWorker from "pdfjs-dist/build/pdf.worker.mjs";
