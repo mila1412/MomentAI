@@ -4,12 +4,12 @@ import * as pdfWorker from "pdfjs-dist/build/pdf.worker.mjs";
 pdfjs.GlobalWorkerOptions.workerSrc =
   import.meta.url + "pdfjs-dist/build/pdf.worker.mjs";
 
-export const usePdfParser = () => {
+export function usePdfParser() {
   const loading = ref(false);
   const error = ref(null);
   const pdfContent = ref(null);
 
-  const parsePdf = async (file) => {
+  async function parsePdf(file) {
     if (!file || !file.type.includes("pdf")) {
       throw new Error("請上傳 PDF 檔案");
     }
@@ -52,7 +52,7 @@ export const usePdfParser = () => {
     } finally {
       loading.value = false;
     }
-  };
+  }
 
   return {
     loading,
@@ -60,4 +60,4 @@ export const usePdfParser = () => {
     pdfContent,
     parsePdf,
   };
-};
+}

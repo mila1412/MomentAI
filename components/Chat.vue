@@ -76,30 +76,21 @@
 </template>
 
 <script setup>
-import { useStorage } from "@vueuse/core";
-
-const router = useRouter();
 const store = useHistoryStore();
 const { isOpen } = storeToRefs(store);
-const response = useStorage("response", []);
-
-const { loading, pdfError, pdfContent, parsePdf } = usePdfParser();
-const status = ref("idle");
-const error = ref(null);
 
 const modelName = ref("gpt-4o"); // 模型選擇
 const inputText = ref(""); //  當前輸入框的值
 const chatInputText = ref(""); // 保存輸入框的值
-const promptContent = ref(""); // 原始提示詞
-const promptList = ref([]); // 處理後的提示詞陣列
 
-const chatId = ref(""); // 輸出ID
-const chatContent = ref(""); // 輸出內容
-
-const chatHistory = computed(() => {
-  if (!props.id) return null;
-  return response.value?.find((item) => item.id === props.id);
-});
+const { loading, pdfError, pdfContent, parsePdf } = usePdfParser();
+const { status, error, response, fetchChat, saveChat } = useChatStream();
+const { promptList, handleFileUpload } = usePdfPrompt(
+  modelName,
+  fetchChat,
+  pdfContent,
+  parsePdf
+);
 
 const props = defineProps({
   id: {
@@ -107,132 +98,44 @@ const props = defineProps({
   },
 });
 
-async function processStreamResponse(res, isGeneratingPrompt) {
-  chatId.value = "";
+const chatHistory = computed(() => {
+  if (!props.id) return null;
+  return response.value?.find((item) => item.id === props.id);
+});
 
-  for await (const chunk of res) {
-    const lines = new TextDecoder().decode(chunk).split("\n");
-
-    for (const line of lines) {
-      if (!line?.startsWith("data: ")) continue;
-
-      const jsonString = line?.slice(6).trim();
-      if (!jsonString) continue; // 跳過空字串
-
-      try {
-        const json = JSON.parse(jsonString);
-        const content = json?.choices?.[0]?.delta?.content;
-
-        // 生成 PDF 關鍵字時只顯示提示框
-        if (isGeneratingPrompt) {
-          promptContent.value += content;
-          if (!chatId.value && json?.id)
-            chatId.value = "pdf-" + Math.random().toString(36).substring(2);
-        } else {
-          // 其餘顯示完整對話
-          chatContent.value += content;
-          if (!chatId.value && json?.id) chatId.value = json?.id;
-        }
-      } catch (err) {
-        console.error("JSON parse error:", err);
-      }
-    }
-  }
-}
-
-async function handleSendMessage(isGeneratingPrompt = false, prompt = null) {
+async function handleSendMessage(prompt = null) {
   if (!inputText.value) return;
   chatInputText.value = inputText.value;
   inputText.value = "";
 
-  status.value = "pending";
-  error.value = null;
-  chatContent.value = "";
+  const { error: sendError } = await fetchChat({
+    input: chatInputText.value,
+    model: modelName.value,
+  });
 
-  try {
-    const res = await $fetch("/api/chat", {
-      method: "POST",
-      body: {
-        messages: [
-          {
-            role: "user",
-            content: chatInputText.value,
-          },
-        ],
-        model: modelName.value,
-        stream: true,
-        momentx_id: "my_momentx_id",
-      },
-      responseType: "stream",
-    });
+  if (sendError) return;
 
-    await processStreamResponse(res, isGeneratingPrompt);
-
-    if (isGeneratingPrompt) return;
-
-    if (chatHistory.value) {
-      response.value = response.value.map((item) => {
-        if (item.id === props.id) {
-          item.content.push({
-            input: showCustomInput.value ? prompt : chatInputText.value,
-            output: chatContent.value,
-          });
-        }
-        return item;
-      });
-    } else {
-      router.push(`/${chatId.value}`);
-      response.value.push({
-        id: chatId.value,
-        content: [
-          {
-            input: showCustomInput.value ? prompt : chatInputText.value,
-            output: chatContent.value,
-          },
-        ],
-        question: showCustomInput.value ? prompt : chatInputText.value,
-      });
-    }
-  } catch (err) {
-    error.value = err;
-    console.error("串流處理錯誤:", err);
-  } finally {
-    status.value = "idle";
-  }
+  saveChat({
+    historyId: props.id,
+    chatHistory: chatHistory.value,
+    displayInput: chatInputText.value,
+  });
 }
 
-// 處理 PDF 檔案上傳
-async function handleFileUpload(event) {
-  promptContent.value = "";
-  promptList.value = [];
-  const target = event.target;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  try {
-    await parsePdf(file);
-    await generatePrompt();
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-// 生成 PDF 提示詞
-async function generatePrompt() {
-  inputText.value = `請根據下列文字生成兩個問題並回傳純文字(三十個字以內、不要斷行或空格)：${pdfContent.value.text}`;
-  await handleSendMessage(true);
-  promptList.value = promptContent.value
-    .split("\n")
-    .map((item) => item.trim().replace(/^\d+\.\s*/, ""));
-}
-
-// 提問 PDF 提示詞
-const showCustomInput = ref(false);
 async function askPrompt(prompt) {
-  showCustomInput.value = true;
-  inputText.value = `請根據下列文字：${pdfContent.value.text} 回答問題：${prompt}`;
-  await handleSendMessage(false, `根據 PDF：${prompt}`);
-  showCustomInput.value = false;
+  const { error: sendError } = await fetchChat({
+    input: `請根據下列文字：${pdfContent.value.text} 回答問題：${prompt}`,
+    model: modelName.value,
+  });
+
+  if (sendError) return;
+
+  saveChat({
+    historyId: props.id,
+    chatHistory: chatHistory.value,
+    displayInput: `根據 PDF：${prompt}`,
+  });
+
   promptList.value = [];
 }
 </script>
