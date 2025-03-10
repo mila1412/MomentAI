@@ -53,7 +53,7 @@
           type="text"
           class="chat__input-field"
           placeholder="Send a message..."
-          @keyup.enter="chat()"
+          @keyup.enter="handleSendMessage()"
         />
         <div class="chat__input-actions">
           <div class="chat__upload">
@@ -67,7 +67,7 @@
             class="icon"
             :class="{ disabled: status === 'pending' }"
             src="~/assets/icon/send.svg"
-            @click="chat()"
+            @click="handleSendMessage()"
           />
         </div>
       </div>
@@ -140,7 +140,7 @@ async function processStreamResponse(res, isGeneratingPrompt) {
   }
 }
 
-async function chat(isGeneratingPrompt = false, prompt = null) {
+async function handleSendMessage(isGeneratingPrompt = false, prompt = null) {
   if (!inputText.value) return;
   chatInputText.value = inputText.value;
   inputText.value = "";
@@ -190,7 +190,7 @@ async function chat(isGeneratingPrompt = false, prompt = null) {
             output: chatContent.value,
           },
         ],
-        question: chatInputText.value,
+        question: showCustomInput.value ? prompt : chatInputText.value,
       });
     }
   } catch (err) {
@@ -220,7 +220,7 @@ async function handleFileUpload(event) {
 // 生成 PDF 提示詞
 async function generatePrompt() {
   inputText.value = `請根據下列文字生成兩個問題並回傳純文字(三十個字以內、不要斷行或空格)：${pdfContent.value.text}`;
-  await chat(true);
+  await handleSendMessage(true);
   promptList.value = promptContent.value
     .split("\n")
     .map((item) => item.trim().replace(/^\d+\.\s*/, ""));
@@ -231,7 +231,7 @@ const showCustomInput = ref(false);
 async function askPrompt(prompt) {
   showCustomInput.value = true;
   inputText.value = `請根據下列文字：${pdfContent.value.text} 回答問題：${prompt}`;
-  await chat(false, `根據 PDF 提問：${prompt}`);
+  await handleSendMessage(false, `根據 PDF：${prompt}`);
   showCustomInput.value = false;
   promptList.value = [];
 }

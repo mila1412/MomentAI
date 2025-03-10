@@ -31,4 +31,4 @@ Vue3、Nuxt3、VueUse、PDF.js
 
 ## TODO
 
-拆分 composable、RWD、部分功能優化(EX：上傳重複 PDF 錯誤處理、loading 處理)
+拆分 composable、RWD、部分功能優化(EX：上傳重複 PDF 錯誤處理、loading 處理)、改成 TS
